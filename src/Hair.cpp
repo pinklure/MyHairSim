@@ -4,7 +4,6 @@
 #include "glm/gtc/quaternion.hpp"
 #include "PathConfig.h"
 #include "OBJ_Loader.h"
-#include <glm/gtx/string_cast.hpp>
 
 Hair::Hair(uint32_t _strandCount, float hairLength, float hairCurlRadius) : strandCount(_strandCount), hairLength(hairLength),
 				curlRadius(hairCurlRadius), computeShader("HairComputeShader.glsl")
@@ -192,65 +191,6 @@ void Hair::constructModel()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, volumeVelocities);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, GL_NONE);
-}
-
-void Hair::setGravity(float strength)
-{
-	gravity = strength;
-	settingsChanged = true;
-}
-
-void Hair::increaseStrandCount()
-{
-	strandCount = glm::clamp<int>(strandCount + 100, 0, maximumStrandCount);
-	settingsChanged = true;
-	std::cout << "Strand count: " << strandCount << '\n';
-}
-
-void Hair::decreaseStrandCount()
-{
-	strandCount = glm::clamp<int>(strandCount - 100, 0, maximumStrandCount);
-	settingsChanged = true;
-	std::cout << "Strand count: " << strandCount << '\n';
-}
-
-void Hair::increaseVelocityDamping()
-{
-	velocityDampingCoefficient = glm::clamp(velocityDampingCoefficient + 0.01f, 0.f, 1.f);
-	settingsChanged = true;
-	std::cout << "Velocity damping coefficient: " << velocityDampingCoefficient << '\n';
-}
-
-void Hair::decreaseVelocityDamping()
-{
-	velocityDampingCoefficient = glm::clamp(velocityDampingCoefficient - 0.01f, 0.f, 1.f);
-	settingsChanged = true;
-	std::cout << "Velocity damping coefficient: " << velocityDampingCoefficient << '\n';
-}
-
-void Hair::increaseCurlRadius()
-{
-	curlRadius = glm::clamp(curlRadius + 0.001f, 0.f, 0.05f);
-	strandWidth = curlRadius * 50.f;
-}
-
-void Hair::decreaseCurlRadius()
-{
-	curlRadius = glm::clamp(curlRadius - 0.001f, 0.f, 0.05f);
-	strandWidth = curlRadius * 50.f;
-}
-
-void Hair::setWind(const glm::vec3& direction, float strength)
-{
-	wind = glm::vec4(direction.x, direction.y, direction.z, glm::clamp(strength, 0.f, 1.f));
-	settingsChanged = true;
-}
-
-void Hair::setFrictionFactor(float friction)
-{
-	frictionFactor = glm::clamp<float>(friction, 0.f, 1.f);
-	settingsChanged = true;
-	std::cout << "Friction factor: " << frictionFactor << std::endl;
 }
 
 void Hair::draw() const

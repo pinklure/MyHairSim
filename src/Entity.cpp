@@ -1,7 +1,6 @@
 #include "Entity.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <iostream>
 
 Entity::Entity() : rotationQuat(glm::angleAxis(0.f, glm::vec3(1.f, 0.f, 0.f)))
 {

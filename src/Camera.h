@@ -10,17 +10,7 @@ public:
 	~Camera() = default;
 	void setPosition(const glm::vec3& position);
 	void setCenter(const glm::vec3& center);
-	void setUp(const glm::vec3& up);
-	void setProjectionNearPlane(float near);
-	void setProjectionFarPlane(float far);
-	void rotateCamera(const glm::vec2& cursorOffset);
-	void setMouseSensitivity(float sensitivity);
-	void setMoveSensitivity(float sensitivity);
-	void moveCamera(Directions direction, float deltaTime);
 	const glm::vec3& getPosition() const { return position; }
-	const glm::vec3& getUDirection() const { return uDirection; }
-	const glm::vec3& getVDirection() const { return vDirection; }
-	const glm::vec3& getWDirection() const { return wDirection; }
 	const glm::mat4& getView() const { return view; }
 	const glm::mat4& getProjection() const { return projection; }
 	bool viewChanged{ true };
@@ -44,23 +34,6 @@ protected:
 	float moveLength{ 10.f };
 	float nearPlane = 1.f;
 	float farPlane = 100.f;
-};
-
-class OrthograficCamera : public Camera {
-public:
-	OrthograficCamera();
-	~OrthograficCamera() = default;
-	void setProjectionLeftPlane(float left);
-	void setProjectionRightPlane(float right);
-	void setProjectionTopPlane(float top);
-	void setProjectionBottomPlane(float bottom);
-
-private:
-	void project() override;
-	float leftPlane = -1.f;
-	float rightPlane = 1.f;
-	float topPlane = 1.f;
-	float bottomPlane = -1.f;
 };
 
 class PerspectiveCamera : public Camera {
