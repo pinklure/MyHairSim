@@ -1,92 +1,6 @@
 #include <glad/glad.h>
-#include <sstream>
-#include <fstream>
 #include <string>
-#include <iostream>
 #include "Shader.h"
-#include "PathConfig.h"
-
-Shader::~Shader()
-{
-	glDeleteProgram(programID);
-}
-
-GLint Shader::getUniformLocation(const std::string& name) const
-{
-	if ((uniformCache.find(name)) != uniformCache.end()) 
-		return uniformCache[name].first;
-
-	GLint location = glGetUniformLocation(programID, name.c_str());
-	if (location != -1) 
-	{
-		uniformCache.insert(std::make_pair(name, std::make_pair(location, false)));
-	}
-	else if (!uniformCache[name].second)
-	{
-		std::cout << "Uniform variable '" << name << "' doesn't exist, or it is unused!" << std::endl;
-		uniformCache[name].second = true;
-	}
-
-	return location;
-}
-
-void Shader::linkProgram() const
-{
-	if (!programID)
-		std::cout << "Error: No shaders attached!" << std::endl;
-
-	GLint success;
-	char infoLog[512];
-
-	glLinkProgram(programID);
-	glGetProgramiv(programID, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(programID, 512, nullptr, infoLog);
-		std::cout << "Failed to link program: " << infoLog << std::endl;
-	}
-}
-
-void Shader::compileAndAttachShader(const std::string& shaderFileName, GLuint& shaderID)
-{
-	std::string shaderCode;
-	std::ifstream shaderFile;
-
-	shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-	try {
-		shaderFile.open(SHADER_FOLDER + shaderFileName);
-		std::stringstream ShaderStream;
-
-		ShaderStream << shaderFile.rdbuf();
-		shaderCode = ShaderStream.str();
-	}
-	catch (std::ifstream::failure& e) {
-		std::cout << e.what() << std::endl;
-		std::cout << "Error: File not successfully read/found!" << std::endl;
-	}
-
-	GLint success;
-	char infoLog[512];
-	const char* shaderCodeString = shaderCode.c_str();
-
-	glShaderSource(shaderID, 1, &shaderCodeString, NULL);
-	glCompileShader(shaderID);
-	glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(shaderID, 512, nullptr, infoLog);
-		std::cout << "Failed to compile  shader: " << shaderFileName << " " << infoLog << std::endl;
-	}
-
-	if (!programID)
-		programID = glCreateProgram();
-
-	glAttachShader(programID, shaderID);
-}
-
-void Shader::use() const
-{
-	glUseProgram(programID);
-}
 
 void Shader::setBool(const std::string& name, const bool value) const
 {
@@ -186,9 +100,4 @@ void Shader::setMat4(const std::string& name, const glm::mat4& value) const
 void Shader::setMat4Array(const std::string& name, GLsizei count, const glm::mat4 values[]) const
 {
 	glUniformMatrix4fv(getUniformLocation(name), count, GL_FALSE, &values[0][0].x);
-}
-
-void Shader::bindShaderUboToBindingPoint(const std::string& uniformBlockName, const GLuint bindingPoint) const
-{
-	glUniformBlockBinding(programID, glGetUniformBlockIndex(programID, uniformBlockName.c_str()), bindingPoint);
 }

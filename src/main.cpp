@@ -11,20 +11,27 @@ int main()
 {
 	Unique<Window> window = std::make_unique<Window>(1440, 810, "Hair Simulation", 4);
 	glEnable(GL_MULTISAMPLE);
+
+    // 开启深度测试
 	glEnable(GL_DEPTH_TEST);
+    // 在片段深度值小于等于缓冲区的深度值时通过测试
 	glDepthFunc(GL_LEQUAL);
 
 //	glClearColor(0.1f, 0.1f, 0.1f, 1.f);
+    // 重置颜色缓冲区
     {
         auto number = 0.8f;
         glClearColor(number, number, number, 1.f);
     }
 
+    // 设置相机
 	PerspectiveCamera cam;
-	cam.setProjectionAspectRatio(1440.f / 810);
-	cam.setPosition(glm::vec3(-5.f, 3.f, 5.f));
-	cam.setCenter(glm::vec3(0.f));
-	cam.setProjectionViewingAngle(100.f);
+    {
+        cam.setProjectionAspectRatio(1440.f / 810);
+        cam.setPosition(glm::vec3(-5.f, 3.f, 5.f));
+        cam.setCenter(glm::vec3(0.f));
+        cam.setProjectionViewingAngle(100.f);
+    }
 
 	// Light source model
 	Unique<Sphere> lightSphere = std::make_unique<Sphere>(10, 5, 0.5f);
