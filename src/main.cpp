@@ -17,7 +17,6 @@ int main()
     // 在片段深度值小于等于缓冲区的深度值时通过测试
 	glDepthFunc(GL_LEQUAL);
 
-//	glClearColor(0.1f, 0.1f, 0.1f, 1.f);
     // 重置颜色缓冲区
     {
         auto number = 0.8f;
@@ -45,16 +44,7 @@ int main()
 
 	// Shaders setup
 	DrawingShader basicShader("BasicVertexShader.glsl", "BasicFragmentShader.glsl");
-	DrawingShader lightingShader("LightVertexShader.glsl", "LightFragmentShader.glsl");
 	DrawingShader hairShader("HairVertexShader.glsl", "HairGeometryShader.glsl", "HairFragmentShader.glsl");
-
-	// Scene light setup
-	lightingShader.use();
-	lightingShader.setVec3("light.position", glm::vec3(glm::column(lightSphere->getTransformMatrix(), 3)));
-	lightingShader.setVec3("light.color", lightSphere->color);
-	lightingShader.setFloat("light.constant", 1.f);
-	lightingShader.setFloat("light.linear", 0.024f);
-	lightingShader.setFloat("light.quadratic", 0.0021f);
 
 	hairShader.use();
 	hairShader.setVec3("light.position", glm::vec3(glm::column(lightSphere->getTransformMatrix(), 3)));
@@ -83,16 +73,8 @@ int main()
 		lightSphere->draw();
 		basicShader.setVec3("objectColor", glm::vec3(1.f, 0.f, 0.f));
 
-		lightingShader.use();
-		lightingShader.setMat4("projection", cam.getProjection());
-		lightingShader.setMat4("view", cam.getView());
-		lightingShader.setVec3("eyePosition", cam.getPosition());
-		lightingShader.setMat4("model", hair->getTransformMatrix());
-		lightingShader.setVec3("light.position", glm::vec3(glm::column(lightSphere->getTransformMatrix(), 3)));
-
 		glm::vec3 tempColor = hair->color;
 		hair->color = glm::vec3(1.f, 0.576f, 0.229f);
-		hair->updateColorsBasedOnMaterial(lightingShader, Entity::Material::PLASTIC);
 		hair->drawHead();
 		hair->color = tempColor;
 
