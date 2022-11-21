@@ -84,7 +84,6 @@ protected:
         shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
         try {
-            std::cout<<"SHADER_FOLDER: "<<SHADER_FOLDER<<"\n";
             shaderFile.open(SHADER_FOLDER + shaderFileName);
             std::stringstream ShaderStream;
 

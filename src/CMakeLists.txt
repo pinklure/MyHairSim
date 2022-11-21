@@ -4,8 +4,7 @@ configure_file(
 )
 
 add_executable(HairSimulation
-		Hair.cpp
-		Shader.cc
+        Shader.cc
 		main.cpp
 )
 
