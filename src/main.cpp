@@ -27,7 +27,8 @@ int main()
 	PerspectiveCamera cam;
     {
         cam.setProjectionAspectRatio(1440.f / 810);
-        cam.setPosition(glm::vec3(-5.f, 3.f, 5.f));
+//        cam.setPosition(glm::vec3(-5.f, 3.f, 5.f));
+        cam.setPosition(glm::vec3(-3.5f, 2.f, 3.5f));
         cam.setCenter(glm::vec3(0.f));
         cam.setProjectionViewingAngle(100.f);
     }
@@ -35,6 +36,7 @@ int main()
 	// Basic hair
 	Unique<Hair> hair = std::make_unique<Hair>(2000, 4.f, 0.f);
 	hair->color = glm::vec3(0.45f, 0.18f, 0.012f);
+//    hair->color = glm::vec3(0.5f);
 
 	DrawingShader hairShader("HairVertexShader.glsl", "HairGeometryShader.glsl", "HairFragmentShader.glsl");
 

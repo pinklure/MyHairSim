@@ -11,7 +11,6 @@ struct Time {
 	float deltaTime = 0.f;
 	float lastDeltaTime = 0.f;
 	float runningTime = 0.f;
-	float frameRate = 0.f;
 };
 
 class Window {
@@ -45,14 +44,13 @@ public:
 	void onUpdate() {
         resized = false;
 
+        auto currentTime = (float)glfwGetTime();
+        tm.lastDeltaTime = tm.deltaTime;
+        tm.deltaTime = currentTime - tm.runningTime;
+        tm.runningTime = currentTime;
+
         glfwPollEvents();
         glfwSwapBuffers(windowHandle);
-
-        auto currentTime = (float)glfwGetTime();
-        t.lastDeltaTime = t.deltaTime;
-        t.deltaTime = currentTime - t.runningTime;
-        t.runningTime = currentTime;
-        t.frameRate = 1.f / t.deltaTime;
     }
 
 	glm::ivec2 getWindowSize() const {
@@ -62,11 +60,11 @@ public:
     }
 
 	bool shouldClose() const { return glfwWindowShouldClose(windowHandle); }
-	const Time& getTime() const { return t; }
+	const Time& getTime() const { return tm; }
 	bool isResized() const { return resized; }
 
 private:
-	Time t;
+	Time tm;
 	GLFWwindow* windowHandle = nullptr;
 	bool resized = false;
 	mutable std::unordered_map<int, bool> keyStates;
