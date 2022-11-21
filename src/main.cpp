@@ -36,8 +36,6 @@ int main()
 	Unique<Hair> hair = std::make_unique<Hair>(2000, 4.f, 0.f);
 	hair->color = glm::vec3(0.45f, 0.18f, 0.012f);
 
-	// Shaders setup
-	DrawingShader basicShader("BasicVertexShader.glsl", "BasicFragmentShader.glsl");
 	DrawingShader hairShader("HairVertexShader.glsl", "HairGeometryShader.glsl", "HairFragmentShader.glsl");
 
 	hairShader.use();
@@ -57,10 +55,6 @@ int main()
         }
 
 		glEnable(GL_CULL_FACE);
-		basicShader.use();
-		basicShader.setMat4("projection", cam.getProjection());
-		basicShader.setMat4("view", cam.getView());
-		basicShader.setVec3("objectColor", glm::vec3(1.f, 0.f, 0.f));
 
 		glm::vec3 tempColor = hair->color;
 		hair->color = glm::vec3(1.f, 0.576f, 0.229f);
