@@ -32,12 +32,6 @@ int main()
         cam.setProjectionViewingAngle(100.f);
     }
 
-	// Light source model
-	Unique<Sphere> lightSphere = std::make_unique<Sphere>(10, 5, 0.5f);
-	lightSphere->scale(glm::vec3(0.1f));
-	lightSphere->translate(glm::vec3(1.f, 2.f, 1.f));
-	lightSphere->color = glm::vec3(1.f);
-
 	// Basic hair
 	Unique<Hair> hair = std::make_unique<Hair>(2000, 4.f, 0.f);
 	hair->color = glm::vec3(0.45f, 0.18f, 0.012f);
@@ -47,8 +41,6 @@ int main()
 	DrawingShader hairShader("HairVertexShader.glsl", "HairGeometryShader.glsl", "HairFragmentShader.glsl");
 
 	hairShader.use();
-	hairShader.setVec3("light.position", glm::vec3(glm::column(lightSphere->getTransformMatrix(), 3)));
-	hairShader.setVec3("light.color", lightSphere->color);
 	hairShader.setFloat("light.constant", 1.f);
 	hairShader.setFloat("light.linear", 0.024f);
 	hairShader.setFloat("light.quadratic", 0.0021f);
@@ -68,9 +60,6 @@ int main()
 		basicShader.use();
 		basicShader.setMat4("projection", cam.getProjection());
 		basicShader.setMat4("view", cam.getView());
-		basicShader.setMat4("model", lightSphere->getTransformMatrix());
-		basicShader.setVec3("objectColor", lightSphere->color);
-		lightSphere->draw();
 		basicShader.setVec3("objectColor", glm::vec3(1.f, 0.f, 0.f));
 
 		glm::vec3 tempColor = hair->color;
@@ -85,7 +74,6 @@ int main()
 		hairShader.setFloat("curlRadius", hair->getCurlRadius());
 		hairShader.setVec3("eyePosition", cam.getPosition());
 		hairShader.setUint("particlesPerStrand", hair->getParticlesPerStrand());
-		hairShader.setVec3("light.position", glm::vec3(glm::column(lightSphere->getTransformMatrix(), 3)));
 		hair->updateColorsBasedOnMaterial(hairShader, Entity::Material::HAIR);
 		hair->draw();
 
