@@ -34,9 +34,8 @@ int main()
     }
 
 	// Basic hair
-	Unique<Hair> hair = std::make_unique<Hair>(2000, 4.f, 0.f);
-	hair->color = glm::vec3(0.45f, 0.18f, 0.012f);
-//    hair->color = glm::vec3(0.5f);
+//	Unique<Hair> hair = std::make_unique<Hair>(2000, 4.f, 0.f);
+    Unique<Hair> hair = std::make_unique<Hair>(2000, 4.f, 0.f);
 
 	DrawingShader hairShader("HairVertexShader.glsl", "HairGeometryShader.glsl", "HairFragmentShader.glsl");
 
@@ -45,7 +44,7 @@ int main()
 	hairShader.setFloat("light.linear", 0.024f);
 	hairShader.setFloat("light.quadratic", 0.0021f);
 
-	glViewport(0, 0, window->getWindowSize().x, window->getWindowSize().y);
+	glViewport(0, 0, window->window_size().x, window->window_size().y);
 
     while (!window->shouldClose())
 	{
@@ -64,23 +63,21 @@ int main()
 		hair->color = tempColor;
 
 		hairShader.use();
+        // 投影变化
 		hairShader.setMat4("projection", cam.getProjection());
+        // 视角变化
 		hairShader.setMat4("view", cam.getView());
+        // 相机位置变化
+        hairShader.setVec3("eyePosition", cam.getPosition());
+
+        // 模型变化
 		hairShader.setMat4("model", hair->getTransformMatrix());
 		hairShader.setFloat("curlRadius", hair->getCurlRadius());
-		hairShader.setVec3("eyePosition", cam.getPosition());
 		hairShader.setUint("particlesPerStrand", hair->getParticlesPerStrand());
-		hair->updateColorsBasedOnMaterial(hairShader, Entity::Material::HAIR);
+
 		hair->draw();
 
-		if (window->isResized())
-		{
-			glm::ivec2 windowSize = window->getWindowSize();
-			cam.setProjectionAspectRatio((float)windowSize.x / windowSize.y);
-			glViewport(0, 0, windowSize.x, windowSize.y);
-		}
-
-		window->onUpdate();
+        window->update();
 	}
 
 	return 0;

@@ -75,8 +75,9 @@ private:
 };
 inline void Hair::constructModel()
 {
-    for (auto& e : ellipsoids)
+    for (auto& e : ellipsoids) {
         e = std::make_unique<Sphere>(50, 30, ellipsoidsRadius);
+    }
 
     ellipsoids[0]->translate(glm::vec3(-1.149691f, -0.971486f, 0.240179f));
     ellipsoids[0]->rotate(-20.f, glm::vec3(1.f, 0.f, 0.f));

@@ -3,7 +3,7 @@
 
 class ComputeShader : public Shader {
 public:
-	ComputeShader(const std::string& shaderFile) {
+	explicit ComputeShader(const std::string& shaderFile) {
         GLuint shaderID = glCreateShader(GL_COMPUTE_SHADER);
         compileAndAttachShader(shaderFile, shaderID);
         linkProgram();
@@ -19,14 +19,17 @@ public:
         return values;
     }
 	void setGlobalWorkGroupCount(GLuint workGroupX = 1, GLuint workGroupY = 1, GLuint workGroupZ = 1) {
-        if (workGroupX != 0)
+        if (workGroupX != 0) {
             globalWorkGroupX = workGroupX;
+        }
 
-        if (workGroupY != 0)
+        if (workGroupY != 0) {
             globalWorkGroupY = workGroupY;
+        }
 
-        if (workGroupZ != 0)
+        if (workGroupZ != 0) {
             globalWorkGroupZ = workGroupZ;
+        }
     }
 
 private:

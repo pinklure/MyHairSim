@@ -16,34 +16,33 @@ struct Time {
 class Window {
 public:
 	Window(uint32_t winWidth = 1024, uint32_t winHeight = 768, const char* winName = "MyApplication", int sampleCount = 1) {
-        if (!glfwInit())
+        if (!glfwInit()) {
             std::cerr << ">> Failed to initialize GLFW\n";
+            exit(-1);
+        }
         glfwWindowHint(GLFW_SAMPLES, sampleCount);
 
         this->windowHandle = glfwCreateWindow(winWidth, winHeight, winName, nullptr, nullptr);
         if(this->windowHandle == nullptr) {
             glfwTerminate();
             std::cerr << ">> Failed to create window\n";
+            exit(-1);
         }
 
         glfwMakeContextCurrent(this->windowHandle);
         glfwSetWindowUserPointer(this->windowHandle, this);
-        glfwSetWindowSizeCallback(this->windowHandle, windowResizeCallback);
-        glfwSetWindowUserPointer(this->windowHandle, &resized);
 
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
             std::cerr << "Failed to initialize GLAD\n";
         }
 
-        onUpdate();
+        update();
     }
 
 	~Window() {
         glfwTerminate();
     }
-	void onUpdate() {
-        resized = false;
-
+	void update() {
         auto currentTime = (float)glfwGetTime();
         tm.lastDeltaTime = tm.deltaTime;
         tm.deltaTime = currentTime - tm.runningTime;
@@ -53,7 +52,7 @@ public:
         glfwSwapBuffers(windowHandle);
     }
 
-	glm::ivec2 getWindowSize() const {
+	glm::ivec2 window_size() const {
         glm::ivec2 winSize;
         glfwGetWindowSize(windowHandle, &winSize.x, &winSize.y);
         return winSize;
@@ -61,15 +60,8 @@ public:
 
 	bool shouldClose() const { return glfwWindowShouldClose(windowHandle); }
 	const Time& getTime() const { return tm; }
-	bool isResized() const { return resized; }
 
 private:
 	Time tm;
 	GLFWwindow* windowHandle = nullptr;
-	bool resized = false;
-	mutable std::unordered_map<int, bool> keyStates;
-
-    static void windowResizeCallback(GLFWwindow* window, int w, int h) {
-        *(static_cast<bool*>(glfwGetWindowUserPointer(window))) = true;
-    }
 };
