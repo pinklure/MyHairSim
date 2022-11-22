@@ -9,18 +9,29 @@
 #include <vector>
 #include <array>
 
+const glm::vec4 WIND = {0.f, 0.f, 0.f, 0.2f};
+const float GRAVITY = -9.81f;
+const float FRICTION_FACTOR = 0.02f;
+const float VELOCITY_DAMPING_COEFFICIENCY = 0.9f;
+
+const float PARTICLE_MASS = 0.1f;
+const uint32_t PARTICLE_PER_HAIR = 15U;
+const uint32_t MAX_HAIR_COUNT = 30000U;
+const float HAIR_LENGTH = 4.f;
+
+
 class Hair : public Entity {
 public:
-	Hair(uint32_t _strandCount = 5000U, float hairLength = 3.f, float hairCurliness = 0.0f)
-    : strandCount(_strandCount), hairLength(hairLength), curlRadius(hairCurliness), computeShader("HairComputeShader.glsl")
+	Hair(uint32_t _strandCount)
+    : hair_count(_strandCount), computeShader("HairComputeShader.glsl")
     {
         computeShader.use();
-        computeShader.setUint("hairData.strandCount", strandCount);
-        computeShader.setFloat("hairData.particleMass", 0.1f);
-        computeShader.setFloat("force.gravity", gravity);
-        computeShader.setVec4("force.wind", wind);
-        computeShader.setFloat("frictionCoefficient", frictionFactor);
-        computeShader.setFloat("velocityDampingCoefficient", velocityDampingCoefficient);
+        computeShader.setUint("hairData.strandCount", hair_count);
+        computeShader.setFloat("hairData.particleMass", PARTICLE_MASS);
+        computeShader.setFloat("force.gravity", GRAVITY);
+        computeShader.setVec4("force.wind", WIND);
+        computeShader.setFloat("frictionCoefficient", FRICTION_FACTOR);
+        computeShader.setFloat("velocityDampingCoefficient", VELOCITY_DAMPING_COEFFICIENCY);
         constructModel();
     }
 	~Hair() {
@@ -28,41 +39,27 @@ public:
         glDeleteBuffers(1, &volumeDensities);
         glDeleteBuffers(1, &volumeVelocities);
     }
+
 	void draw() const override {
         glBindVertexArray(vao);
-        for (uint32_t i = 0; i < strandCount; ++i)
+        for (uint32_t i = 0; i < hair_count; ++i)
         {
-            glDrawArrays(GL_LINE_STRIP, i * particlesPerStrand, particlesPerStrand);
+            glDrawArrays(GL_LINE_STRIP, i * PARTICLE_PER_HAIR, PARTICLE_PER_HAIR);
         }
         glBindVertexArray(GL_NONE);
     }
-	void drawHead() const {
-        glBindVertexArray(headVao);
-        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
-        glBindVertexArray(GL_NONE);
-    }
+
 	void applyPhysics(float deltaTime, float runningTime);
-	float getCurlRadius() const { return curlRadius; }
-	uint32_t getParticlesPerStrand() const { return particlesPerStrand; }
 
 private:
 	GLuint velocityArrayBuffer = GL_NONE;		// Shader storage buffer object for velocities
 	GLuint volumeDensities = GL_NONE;
 	GLuint volumeVelocities = GL_NONE;
 
-	uint32_t strandCount;
-	float curlRadius = 0.0f;
+	uint32_t hair_count;
+
 	ComputeShader computeShader;
-	uint32_t particlesPerStrand = 15;
-	glm::vec4 wind{ 0.f, 0.f, 0.f, 0.2f };
-	float gravity = -9.81f;
-	bool settingsChanged = false;
-	const uint32_t maximumStrandCount = 30000U;
-	float frictionFactor = 0.02f;
 	void constructModel();
-	float strandWidth = 0.2f;
-	float hairLength = 1.f;
-	float velocityDampingCoefficient = 0.9f;
 
 	// Head variables
 	glm::vec3 headColor;
@@ -163,13 +160,12 @@ inline void Hair::constructModel()
     }
 
     std::vector<float> data;
-    data.reserve(maximumStrandCount * particlesPerStrand * 3);
+    data.reserve(MAX_HAIR_COUNT * PARTICLE_PER_HAIR * 3);
 
-    float segmentLength = hairLength / (particlesPerStrand - 1);
+    float segmentLength = HAIR_LENGTH/ (PARTICLE_PER_HAIR - 1);
 
-    computeShader.setFloat("curlRadius", curlRadius);
-    computeShader.setFloat("hairData.segmentLength", hairLength / (particlesPerStrand - 1));
-    computeShader.setUint("hairData.particlesPerStrand", particlesPerStrand);
+    computeShader.setFloat("hairData.segmentLength", HAIR_LENGTH/ (PARTICLE_PER_HAIR - 1));
+    computeShader.setUint("hairData.particlesPerStrand", PARTICLE_PER_HAIR);
     computeShader.setFloat("ellipsoidRadius", ellipsoidsRadius);
     uint32_t counter = 0;
     for (uint32_t i = 0; i < loader.LoadedVertices.size(); i += 10)
@@ -178,8 +174,8 @@ inline void Hair::constructModel()
         if ((vertex.Position.Y > -1.f && vertex.Position.Z < 0.f) || (vertex.Position.Y > -0.5f && vertex.Position.Z < 0.7f) || (vertex.Position.Y >= 0.5f && vertex.Position.Z < 1.7f))
         {
             ++counter;
-            if (counter >= maximumStrandCount - 1) break;
-            for (uint32_t j = 0; j < particlesPerStrand; ++j)
+            if (counter >= MAX_HAIR_COUNT- 1) break;
+            for (uint32_t j = 0; j < PARTICLE_PER_HAIR; ++j)
             {
                 glm::vec3 particle(vertex.Position.X, vertex.Position.Y, vertex.Position.Z);
                 particle += glm::normalize(particle) * (float)j * segmentLength;
@@ -191,14 +187,14 @@ inline void Hair::constructModel()
     }
 
     const int strandsOnHair = counter;
-    for (; counter < maximumStrandCount; ++counter)
+    for (; counter < MAX_HAIR_COUNT; ++counter)
     {
-        int randomNumber = glm::linearRand(0, strandsOnHair - 1) * particlesPerStrand * 3;
+        int randomNumber = glm::linearRand(0, strandsOnHair - 1) * PARTICLE_PER_HAIR * 3;
         glm::vec3 firstCoords(data[randomNumber], data[randomNumber + 1], data[randomNumber + 2]);
-        randomNumber += particlesPerStrand * 3;
+        randomNumber += PARTICLE_PER_HAIR * 3;
         glm::vec3 secondCoords(data[randomNumber], data[randomNumber + 1], data[randomNumber + 2]);
         glm::vec3 coordsBetween = secondCoords + (firstCoords - secondCoords) * 0.5f;
-        for (uint32_t j = 0; j < particlesPerStrand; ++j)
+        for (uint32_t j = 0; j < PARTICLE_PER_HAIR; ++j)
         {
             glm::vec3 particle = coordsBetween + glm::normalize(coordsBetween) * (float)j * segmentLength;
             data.push_back(particle.x);
@@ -218,8 +214,8 @@ inline void Hair::constructModel()
 
     // Velocities
     data.clear();
-    data.reserve(maximumStrandCount * particlesPerStrand * 3);
-    for (uint32_t i = 0; i < maximumStrandCount * particlesPerStrand * 3; ++i)
+    data.reserve(MAX_HAIR_COUNT * PARTICLE_PER_HAIR * 3);
+    for (uint32_t i = 0; i < MAX_HAIR_COUNT * PARTICLE_PER_HAIR * 3; ++i)
         data.push_back(0.f);
 
     glGenBuffers(1, &velocityArrayBuffer);
@@ -264,14 +260,6 @@ inline void Hair::applyPhysics(float deltaTime, float runningTime)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, GL_NONE);
 
     computeShader.use();
-//	if (settingsChanged)
-//	{
-//		computeShader.setFloat("force.gravity", gravity);
-//		computeShader.setVec4("force.wind", wind);
-//		computeShader.setFloat("frictionCoefficient", frictionFactor);
-//		computeShader.setFloat("velocityDampingCoefficient", velocityDampingCoefficient);
-//		settingsChanged = false;
-//	}
 
     for (uint32_t i = 0; i < ellipsoids.size(); ++i)
     {
@@ -279,13 +267,13 @@ inline void Hair::applyPhysics(float deltaTime, float runningTime)
     }
 
     computeShader.setMat4("model", transformMatrix);
-    computeShader.setUint("hairData.strandCount", strandCount);
+    computeShader.setUint("hairData.strandCount", hair_count);
     computeShader.setFloat("deltaTime", deltaTime);
     computeShader.setFloat("runningTime", runningTime);
     computeShader.setUint("state", 0);
     GLuint localWorkGroupCountX = computeShader.getLocalWorkGroupsCount().x;
-    GLuint globalWorkGroupCount = strandCount / localWorkGroupCountX;
-    if (strandCount % localWorkGroupCountX != 0)
+    GLuint globalWorkGroupCount = hair_count / localWorkGroupCountX;
+    if (hair_count % localWorkGroupCountX != 0)
     {
         globalWorkGroupCount += 1;
     }
@@ -294,8 +282,8 @@ inline void Hair::applyPhysics(float deltaTime, float runningTime)
     computeShader.dispatch();
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-    globalWorkGroupCount = strandCount * particlesPerStrand / localWorkGroupCountX;
-    if ((strandCount * particlesPerStrand) % localWorkGroupCountX != 0)
+    globalWorkGroupCount = hair_count * PARTICLE_PER_HAIR / localWorkGroupCountX;
+    if ((hair_count * PARTICLE_PER_HAIR) % localWorkGroupCountX != 0)
     {
         globalWorkGroupCount += 1;
     }

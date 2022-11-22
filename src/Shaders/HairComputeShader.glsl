@@ -41,7 +41,6 @@ struct Force {
 uniform mat4 ellipsoids[ELLIPSOID_COUNT];
 uniform float ellipsoidRadius;
 uniform mat4 model;
-uniform float curlRadius = 0.05f;
 uniform uint state;
 uniform Force force;
 uniform HairData hairData;
@@ -207,7 +206,7 @@ void resolveBodyCollision(inout vec3 particlePosition)
 		vec3 transformedPosition = vec3(inverse(ellipsoids[i]) * vec4(particlePosition, 1.f));
 		if (length(transformedPosition) < ellipsoidRadius) 
 		{
-			transformedPosition = normalize(transformedPosition) * (ellipsoidRadius + curlRadius);
+			transformedPosition = normalize(transformedPosition) * (ellipsoidRadius);
 			particlePosition = vec3(ellipsoids[i] * vec4(transformedPosition, 1.f));
 		}
 	}
