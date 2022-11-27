@@ -5,6 +5,8 @@
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 #include <unordered_map>
+#include<iostream>
+#include <glm/common.hpp>
 
 struct Time {
 	float deltaTime = 0.f;
@@ -15,25 +17,62 @@ struct Time {
 
 class Window {
 public:
-	Window(uint32_t winWidth = 1024, uint32_t winHeight = 768, const char* winName = "MyApplication", int sampleCount = 1);
-	~Window();
-	void onUpdate();
-	glm::vec2 getCursorOffset() const;
-	const glm::vec2 getCursorPositions() const;
-	glm::ivec2 getWindowSize() const;
-	bool isKeyPressed(int key) const;
-	bool isKeyTapped(int key) const;
-	bool isMouseButtonPressed(int key) const;
+	Window(uint32_t winWidth = 1024, uint32_t winHeight = 768, const char* winName = "MyApplication", int sampleCount = 1) {
+		GLFWwindow* window = nullptr;
+
+		/* Initialize the library */
+		if (!glfwInit())
+			std::cerr << "Failed to initialize GLFW!" << std::endl;
+
+		glfwWindowHint(GLFW_SAMPLES, sampleCount);
+		/* Create a windowed mode window and its OpenGL context */
+		window = glfwCreateWindow(winWidth, winHeight, winName, NULL, NULL);
+		if (!window)
+		{
+			glfwTerminate();
+			std::cerr << "Failed to create window!" << std::endl;
+		}
+
+		glfwMakeContextCurrent(window);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		glfwSetWindowUserPointer(window, this);
+
+		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+			std::cerr << "Failed to initialize GLAD" << std::endl;
+		}
+
+		this->windowHandle = window;
+		onUpdate();
+	}
+
+	~Window() {
+		glfwTerminate();
+	}
+	void onUpdate() {
+		// Updating keys
+		glfwPollEvents();
+		glfwSwapBuffers(windowHandle);
+
+		// Updating time
+		float currentTime = (float)glfwGetTime();
+		t.lastDeltaTime = t.deltaTime;
+		t.deltaTime = currentTime - t.runningTime;
+		t.runningTime = currentTime;
+		t.frameRate = 1.f / t.deltaTime;
+
+		if (glm::abs(t.deltaTime - t.lastDeltaTime) > 0.2f)
+			std::cout << "Frame rate: " << t.frameRate << std::endl;
+	}
+
+	glm::ivec2 getWindowSize() const {
+		glm::ivec2 winSize;
+		glfwGetWindowSize(windowHandle, &winSize.x, &winSize.y);
+		return winSize;
+	}
 	bool shouldClose() const { return glfwWindowShouldClose(windowHandle); }
 	const Time& getTime() const { return t; }
-	const bool isResized() const { return resized; }
 
 private:
 	Time t;
 	GLFWwindow* windowHandle = nullptr;
-	double cursorX{ 512.f }, cursorY{ 384.f };
-	double lastX{ 0.f }, lastY{ 0.f };
-	static void windowResizeCallback(GLFWwindow* window, int w, int h);
-	bool resized = false;
-	mutable std::unordered_map<int, bool> keyStates;
 };

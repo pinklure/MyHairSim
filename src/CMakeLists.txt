@@ -4,16 +4,8 @@ configure_file(
 )
 
 add_executable(HairSimulation
-	Camera.cpp 			Camera.h
-	Cube.cpp 			Cube.h
-	Entity.cpp 			Entity.h
-	Hair.cpp			Hair.h
-	Shader.cpp 			Shader.h
-	ComputeShader.cpp	ComputeShader.h
-	DrawingShader.cpp	DrawingShader.h
-	Sphere.cpp 			Sphere.h
-	Texture.cpp 		Texture.h
-	Window.cpp 			Window.h
+	Camera.cpp 
+	Shader.cpp 
 	main.cpp
 )
 

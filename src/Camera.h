@@ -46,23 +46,6 @@ protected:
 	float farPlane = 100.f;
 };
 
-class OrthograficCamera : public Camera {
-public:
-	OrthograficCamera();
-	~OrthograficCamera() = default;
-	void setProjectionLeftPlane(float left);
-	void setProjectionRightPlane(float right);
-	void setProjectionTopPlane(float top);
-	void setProjectionBottomPlane(float bottom);
-
-private:
-	void project() override;
-	float leftPlane = -1.f;
-	float rightPlane = 1.f;
-	float topPlane = 1.f;
-	float bottomPlane = -1.f;
-};
-
 class PerspectiveCamera : public Camera {
 public:
 	PerspectiveCamera();

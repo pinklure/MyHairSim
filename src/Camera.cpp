@@ -160,38 +160,3 @@ void PerspectiveCamera::project()
 	projection = glm::perspective(glm::radians(viewingAngle), aspectRatio, nearPlane, farPlane);
 	projectionChanged = true;
 }
-
-OrthograficCamera::OrthograficCamera()
-{
-	project();
-}
-
-void OrthograficCamera::setProjectionLeftPlane(float left)
-{
-	leftPlane = left;
-	project();
-}
-
-void OrthograficCamera::setProjectionRightPlane(float right)
-{
-	rightPlane = right;
-	project();
-}
-
-void OrthograficCamera::setProjectionTopPlane(float top)
-{
-	topPlane = top;
-	project();
-}
-
-void OrthograficCamera::setProjectionBottomPlane(float bottom)
-{
-	bottomPlane = bottom;
-	project();
-}
-
-void OrthograficCamera::project()
-{
-	projection = glm::ortho(leftPlane, rightPlane, nearPlane, farPlane);
-	projectionChanged = true;
-}
