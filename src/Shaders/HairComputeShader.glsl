@@ -31,14 +31,10 @@ struct HairData {
 	float segmentLength;
 };
 
-struct Force {
-	vec4 wind;
-	float gravity;
-};
-
 uniform float headRadius;
 uniform uint state;
-uniform Force force;
+uniform float gravity;
+uniform vec4 wind;
 uniform HairData hairData;
 uniform float deltaTime;
 uniform float runningTime;
@@ -55,14 +51,14 @@ vec3 followTheLeader(in vec3 leaderParticlePosition, in vec3 proposedParticlePos
 
 vec3 generateGravityForce() 
 {
-	return hairData.particleMass * vec3(0.0, force.gravity, 0.0);
+	return hairData.particleMass * vec3(0.0, gravity, 0.0);
 }
 
 vec3 generateWindForce(in vec3 particlePosition) 
 {
-	if (vec3(force.wind) == vec3(0.0)) 
+	if (vec3(wind) == vec3(0.0)) 
 	{
-		return force.wind.w * normalize(vec3(
+		return wind.w * normalize(vec3(
 					sin(runningTime + particlePosition.z * 20.0),
                     cos(deltaTime * particlePosition.y * 5.0),
                     sin(runningTime + particlePosition.x * 30.0)
@@ -71,7 +67,7 @@ vec3 generateWindForce(in vec3 particlePosition)
 	} 
 	else
 	{
-		return normalize(vec3(force.wind)) * force.wind.w;
+		return normalize(vec3(wind)) * wind.w;
 	}
 }
 
@@ -197,8 +193,8 @@ void fillVolumes()
 
 void resolveBodyCollision(inout vec3 particlePosition) 
 {
-	if (length(particlePosition) < headRadius + 0.04f) 
-		particlePosition = normalize(particlePosition) * (headRadius + 0.04f);
+		if (length(particlePosition) < headRadius + 0.04f) 
+	 		particlePosition = normalize(particlePosition) * (headRadius + 0.04f);
 }
 
 void moveParticles()

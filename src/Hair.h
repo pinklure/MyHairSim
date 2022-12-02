@@ -3,6 +3,8 @@
 #include "ComputeShader.h"
 #include <vector>
 #include <glm/gtc/random.hpp>
+#include <iostream>
+#include <functional>
 
 class Hair : public Entity {
 public:
@@ -16,8 +18,8 @@ public:
 		computeShader.setUint("hairData.particlesPerStrand", particlesPerStrand);
 		computeShader.setFloat("hairData.particleMass", 0.1f);
 		computeShader.setFloat("hairData.segmentLength", 4.f / strandSegmentsCount);
-		computeShader.setFloat("force.gravity", gravity);
-		computeShader.setVec4("force.wind", wind);
+		computeShader.setFloat("gravity", gravity);
+		computeShader.setVec4("wind", wind);
 		computeShader.setFloat("frictionCoefficient", frictionFactor);
 		computeShader.setFloat("headRadius", 1.f);
 		constructModel();
@@ -29,7 +31,9 @@ public:
 	}
 	void draw() const override {
 		glBindVertexArray(vao);
-		glMultiDrawArrays(GL_LINE_STRIP, firsts.data(), lasts.data(), strandCount);
+                for(auto i = 0ul; i<strandCount; i++) {
+                    glDrawArrays(GL_LINE_STRIP, firsts[i], particlesPerStrand);
+                }
 		glBindVertexArray(GL_NONE);
 	}
 	void applyPhysics(float deltaTime, float runningTime);
@@ -50,7 +54,6 @@ private:
 	GLuint volumeVelocities = GL_NONE;
 
 	std::vector<GLint> firsts;
-	std::vector<GLint> lasts;
 	uint32_t strandCount;
 	ComputeShader computeShader;
 	GLuint particlesPerStrand = 0;
@@ -61,33 +64,26 @@ private:
 	void constructModel();
 };
 
-inline void Hair::constructModel()
-{
+inline void Hair::constructModel(){
 	const float segmentLength = 4.f / (particlesPerStrand - 1);
 	std::vector<float> data;
-	data.reserve(maximumStrandCount * particlesPerStrand * 3);
 
-	for (uint32_t i = 0; i < maximumStrandCount; ++i)
-	{
-		glm::vec3 randCoords = glm::sphericalRand(1.0f);
-		while (randCoords.z > 0.1f || randCoords.y < -0.7f)
-			randCoords = glm::sphericalRand(1.0f);
+	for (uint32_t i = 0; i < maximumStrandCount; ++i){
+            glm::vec3 randCoords;
+            do {
+                randCoords = glm::sphericalRand(1.f);
+            } while(randCoords.z > 0.1f || randCoords.y < -0.7f);
 
-		for (uint32_t j = 0; j < particlesPerStrand; ++j)
-		{
-			glm::vec3 temp = randCoords;
-			data.push_back(temp.x);
-			data.push_back(temp.y);
-			data.push_back(temp.z - j * segmentLength);
-		}
+            for (uint32_t j = 0; j < particlesPerStrand; ++j){
+                    glm::vec3 temp = randCoords;
+                    data.push_back(temp.x);
+                    data.push_back(temp.y);
+                    data.push_back(temp.z - j * segmentLength);
+            }
 	}
 
-	firsts.reserve(maximumStrandCount);
-	lasts.reserve(maximumStrandCount);
-	for (uint32_t i = 0; i < maximumStrandCount - 1; ++i)
-	{
+	for (uint32_t i = 0; i < maximumStrandCount - 1; ++i){
 		firsts.push_back(particlesPerStrand * i);
-		lasts.push_back(particlesPerStrand);
 	}
 
         // Bind Vertex Array Object
@@ -102,7 +98,6 @@ inline void Hair::constructModel()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
         // with vertex_attr location as argument to enable vertex_attr
 	glEnableVertexAttribArray(0);
-
         // Unbind Array Buffer to avoid unexpect modify
 	glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
         // Unbind Vertex Array to avoid unexpect modify
@@ -112,10 +107,7 @@ inline void Hair::constructModel()
 
 	// Velocities
         data.resize(0);
-        data.resize(maximumStrandCount * particlesPerStrand, 0);
-	/* data.reserve(maximumStrandCount * particlesPerStrand * 3); */
-	/* for (uint32_t i = 0; i < maximumStrandCount * particlesPerStrand * 3; ++i) */
-	/* 	data.push_back(0.f); */
+        data.resize(maximumStrandCount * particlesPerStrand * 3, 0);
 
 	glGenBuffers(1, &velocityArrayBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, velocityArrayBuffer);
@@ -137,53 +129,50 @@ inline void Hair::constructModel()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, GL_NONE);
 }
 
+
+static void ZeroInitStorageBuffer(GLuint buffer_id, uint32_t size) {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer_id);
+    auto ptr = (int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    for(auto i = 0ul; i < size; i++, ptr[i] = 0);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, GL_NONE);
+}
+
+GLuint ceil_div(uint32_t a, uint32_t b) {
+    auto res = a / b;
+    if(a % b != 0) {
+        res += 1;
+    }
+    return res;
+}
+
+
+
+static void dispatch_compute(ComputeShader& compute_shader, uint32_t global_work_group_count, uint8_t state) {
+    compute_shader.setUint("state", state);
+    compute_shader.setGlobalWorkGroupCount(global_work_group_count);
+    compute_shader.dispatch();
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+
 inline void Hair::applyPhysics(float deltaTime, float runningTime)
 {
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, volumeDensities);
-	int* densities = (int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
 	uint32_t volumeSize = 11 * 11 * 11;
-	for (uint32_t i = 0; i < volumeSize; ++i)
-	{
-		densities[i] = 0;
-	}
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, volumeVelocities);
-	int* velocities = (int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-
-	for (uint32_t i = 0; i < volumeSize * 3; i++)
-	{
-		velocities[i] = 0;	
-	}
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, GL_NONE);
+        ZeroInitStorageBuffer(volumeDensities, volumeSize);
+        ZeroInitStorageBuffer(volumeVelocities, volumeSize * 3);
 
 	computeShader.use();
 	computeShader.setUint("hairData.strandCount", strandCount);
 	computeShader.setFloat("deltaTime", deltaTime);
 	computeShader.setFloat("runningTime", runningTime);
-	computeShader.setUint("state", 0);
-	GLuint localWorkGroupCountX = computeShader.getLocalWorkGroupsCount().x;
-	GLuint globalWorkGroupCount = strandCount / localWorkGroupCountX;
-	if (strandCount % localWorkGroupCountX != 0)
-	{
-		globalWorkGroupCount += 1;
-	}
 
-	computeShader.setGlobalWorkGroupCount(globalWorkGroupCount);
-	computeShader.dispatch();
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-	globalWorkGroupCount = strandCount * particlesPerStrand / localWorkGroupCountX;
-	if ((strandCount * particlesPerStrand) % localWorkGroupCountX != 0)
-	{
-		globalWorkGroupCount += 1;
-	}
-	computeShader.setGlobalWorkGroupCount(globalWorkGroupCount);
-	computeShader.setUint("state", 1);
-	computeShader.dispatch();
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-	computeShader.setUint("state", 2);
-	computeShader.dispatch();
+	auto localWorkGroupCount = computeShader.getLocalWorkGroupsCount();
+        // Follow Ther Leader Algorithm
+        dispatch_compute(computeShader, ceil_div(strandCount, localWorkGroupCount), 0);
+        /* // Fill Volumes */
+        dispatch_compute(computeShader, ceil_div(strandCount * particlesPerStrand, localWorkGroupCount), 1);
+        // Coliisions
+        dispatch_compute(computeShader, ceil_div(strandCount * particlesPerStrand, localWorkGroupCount), 2);
 }

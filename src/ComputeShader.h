@@ -11,46 +11,21 @@ public:
 	}
 
 	~ComputeShader() override = default;
+
 	void dispatch() const {
-		glDispatchCompute(globalWorkGroupX, globalWorkGroupY, globalWorkGroupZ);
+		glDispatchCompute(globalWorkGroup, 1, 1);
 	}
-	glm::ivec3 getMaxLocalWorkGroups() const {
-		glm::ivec3 values;
-		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &values.x);
-		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &values.y);
-		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &values.z);
-		return values;
-	}
-	glm::ivec3 getLocalWorkGroupsCount() const {
+
+        auto getLocalWorkGroupsCount() const {
 		glm::ivec3 values;
 		glGetProgramiv(programID, GL_COMPUTE_WORK_GROUP_SIZE, &values.x);
-		return values;
+                return values.x;
 	}
-	glm::ivec3 getMaxGlobalWorkGroups() const {
-		glm::ivec3 values;
-		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &values.x);
-		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &values.y);
-		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &values.z);
-		return values;
-	}
-	GLuint getMaxWorkGroupInvocations() const {
-		GLint value;
-		glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &value);
-		return value;
-	}
-	void setGlobalWorkGroupCount(GLuint workGroupX = 1, GLuint workGroupY = 1, GLuint workGroupZ = 1) {
-		if (workGroupX != 0)
-			globalWorkGroupX = workGroupX;
 
-		if (workGroupY != 0)
-			globalWorkGroupY = workGroupY;
-
-		if (workGroupZ != 0)
-			globalWorkGroupZ = workGroupZ;
+	void setGlobalWorkGroupCount(GLuint workGroup) {
+                globalWorkGroup = workGroup;
 	}
 
 private:
-	GLuint globalWorkGroupX = 1;
-	GLuint globalWorkGroupY = 1;
-	GLuint globalWorkGroupZ = 1;
+	GLuint globalWorkGroup = 1;
 };

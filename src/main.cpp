@@ -22,6 +22,7 @@ int main()
 
 	// Basic hair
 	auto hair = std::make_unique<Hair>(1000, 20);
+	/* auto hair = std::make_unique<Hair>(1, 20); */
 	/* hair->color = glm::vec3(0.22f, 0.12f, 0.02f); */
 	hair->color = glm::vec3(0, 0, 0);
 
@@ -29,7 +30,7 @@ int main()
 	DrawingShader basicShader("BasicVertexShader.glsl", "BasicFragmentShader.glsl");
 	glViewport(0, 0, window->getWindowSize().x, window->getWindowSize().y);
 
-	do {
+        while(!window->shouldClose()) {
 		glDisable(GL_CULL_FACE);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -44,8 +45,7 @@ int main()
 		hair->draw();
 
 		glEnable(GL_CULL_FACE);
-		// headModel->draw();
 
 		window->onUpdate();
-	} while (!window->shouldClose());
+	}
 }
